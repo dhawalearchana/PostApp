@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search User</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.21.0/moment.min.js"></script>
+</head>
+<body>
+    <header class="navbar navbar-fixed-top navbar-inverse" style="margin:0;">
+       <div class="container">
+             <div class="navbar-header">
+                <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#primaryNavbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+            </div>
+            <ul id="primaryNavbar" class="nav navbar-nav" style="margin-left:2%">
+                <li><a href="/posts/">Posts</a></li>
+                <li><a href="/usersLists/">Users</a></li>
+                <li class="active"><a href="/searchUser/">Search</a></li>
+            </ul>
+            <div>
+                <ul class="nav navbar-nav dropdown pull-right">
+                    <li>
+                        <a href="#" class="dropdown-toggle padding_zero" data-toggle="dropdown"><span style="margin-left: 10px">{{ request.session.name }}<b class="caret"></b></span></a>
+                        <ul class="dropdown-menu scrollable">
+                            <li><a href="/logout/" onclick="javascript:sessionStorage.clear();">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </header>
+    <section>
+        <div class="col-md-12 col-sm-12 col-xs-12 form-group" style="background-color: #eee;margin-top: 50px ">
+            <input type="hidden" id='csrfmiddlewaretoken' value="{{ csrf_token }}">
+            <div class="col-md-8 col-sm-8 col-xs-12 col-md-offset-2 col-sm-offset-2" style="background-color: #FFFFFF;border-bottom: 1px solid #eee">
+                <div class="col-md-2 col-sm-2 col-xs-12" style="padding: 0px">
+                    <h4 style="padding:5px 0 5px 20px;"><b> Search User</b></h4>
+                </div>
+                <div class="col-md-7 col-sm-7 col-xs-10" style="padding-top: 7px;padding-left: 0px;padding-right: 0px;">
+                    <input type="text" id="searchUser" class="form-control" placeholder="Search User by Name or Email or Contact">
+                </div>
+                <div class="col-md-3 col-sm-3 col-xs-2" style="padding-top: 7px">
+                    <button id="addPersonBtn" class="btn btn-primary btn-sm" onclick="searchUserDetails();">Search</button>
+                    <button id="clearBtn" class="btn btn-danger btn-sm" onclick="cancelSearch();">Cancel</button>
+                </div>
+            </div>
+            <div class="col-md-8 col-sm-8 col-xs-12 col-md-offset-2 col-sm-offset-2" style="background-color: #FFFFFF">
+                <div id="userDetailsDiv"></div>
+            </div>
+        </div>
+    </section>
+    <script type="application/javascript">
+        function csrfSafeMethod(method) {
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
+        function sameOrigin(url) {
+            var host = document.location.host; // host + port
+            var protocol = document.location.protocol;
+            var sr_origin = '//' + host;
+            var origin = protocol + sr_origin;
+            // Allow absolute or scheme relative URLs to same origin
+            return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
+                (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
+                // or any other URL that isn't scheme relative or absolute i.e relative.
+                !(/^(\/\/|http:|https:).*/.test(url));
+        }
+
+        $.ajaxSetup({
+            beforeSend: function (xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && sameOrigin(settings.url)) {
+                    xhr.setRequestHeader("X-CSRFToken", document.getElementById('csrfmiddlewaretoken').value);
+                }
+            }
+        });
+
+        function cancelSearch() {
+            $('#userDetailsDiv').empty();
+            document.getElementById('searchUser').value = "";
+        }
+
+        function searchUserDetails() {
+            var searchText = document.getElementById('searchUser').value;
+            if(searchText != ""){
+                $.ajax({
+                    url:'/searchUserDetailsAPI/',
+                    type:'POST',
+                    data:{'searchText':searchText},
+                    success:function (resp) {
+                        if(resp.length > 0) {
+                            displayPost(resp);
+                        }
+                        else {
+                            var userDetailsDiv = $('#userDetailsDiv');
+                            userDetailsDiv.empty();
+                            userDetailsDiv.append('<div class="text-center" style="margin-top:10px;"><p>Data is not avaliable for above search.</p></div>');
+                        }
+                    }
+                });
+            }
+        }
+        function displayPost(postData) {
+            var userDetailsDiv = $('#userDetailsDiv');
+            userDetailsDiv.empty();
+            var itr = 0;
+            for(itr = 0; itr < postData.length; itr++){
+                userDetailsDiv.append('<div class="col-md-12 col-sm-12 col-xs-12 clear_both" style="border-bottom:1px solid #eee"><div class="col-md-1 col-sm-1 col-xs-2" style="font-size:32px;padding-right:0px;"><span style="float:right"><i class="fas fa-user-circle"></i></span></div><div class="col-md-11 col-sm-11 col-xs-11" style="padding:0px;"><div class="col-md-12 col-sm-12 col-xs-12"><p style="float:left;margin-top:10px; font-size:12px; margin-bottom:0px;"><b>'+postData[itr].userDetailsId.fullName+'</b></p><p style="float:right;margin-top:10px; font-size:12px; margin-bottom:0px;color:#6a737c"> on '+moment(postData[itr].postDate).format('MMM D, h:mm a')+'</p></div><div class="col-md-12 col-sm-12 col-xs-12"><p s>'+postData[itr].postText+'</p></div></div></div><hr>');
+            }
+        }
+    </script>
+</body>
+</html>

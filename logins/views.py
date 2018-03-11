@@ -8,6 +8,7 @@ from django.template.context import RequestContext
 from django.shortcuts import render
 from django.utils import timezone
 from django.core import serializers
+from django.db.models import Q
 
 # Create your views here.
 def logoutController(request):
@@ -46,12 +47,20 @@ def registrationController(request):
     userObj.email = email
     userObj.username = u_name
     userObj.password = user_pwd
+    userObj.registeredDate = timezone.now()
     userObj.save()
     return render(request, 'registration/login.html', {'success': 'Your registration has been done successfully.'})
 
 
 def postsController(request):
     return render(request, 'registration/postList.html', {'error': ''})
+
+
+def userController(request):
+    return render(request, 'registration/userLists.html', {'error': ''})
+
+def searchUserController(request):
+    return render(request, 'registration/searchUser.html', {'error': ''})
 
 
 def savePostController(request):
@@ -67,9 +76,34 @@ def savePostController(request):
     except:
         return HttpResponse(0)
 
+
 def getPostListAPI(request):
-    postList = posts.objects.all().order_by('-postDate')
-    qs_json = postSerialiser(postList, many=True).data
-    return JSONResponse(qs_json )
+    try:
+        postList = posts.objects.all().order_by('-postDate')
+        qs_json = postSerialiser(postList, many=True).data
+        return JSONResponse(qs_json)
+    except:
+        return JSONResponse([])
+
+
+def getAllUserDetailsAPI(request):
+    try:
+        userList = userDetails.objects.all()
+        userjson = userDetailsSerialiser(userList, many=True).data
+        return JSONResponse(userjson)
+    except:
+        return JSONResponse([])
+
+
+def searchUserDetailsAPI(request):
+    try:
+        searchText = request.POST.get('searchText')
+        query = Q(fullName__icontains=searchText) | Q(contact__icontains=searchText) | Q(email__icontains=searchText)
+        userList = userDetails.objects.filter(query).values_list('id', flat=True)
+        postList = posts.objects.filter(userDetailsId_id__in=userList).order_by('-postDate')
+        qs_json = postSerialiser(postList, many=True).data
+        return JSONResponse(qs_json)
+    except:
+        return JSONResponse([])
 
 

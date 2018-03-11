@@ -26,7 +26,8 @@
             </div>
             <ul id="primaryNavbar" class="nav navbar-nav" style="margin-left:2%">
                 <li class="active"><a href="/posts/">Posts</a></li>
-                <li><a href="/centersAnalytics/">Users</a></li>
+                <li><a href="/usersLists/">Users</a></li>
+                <li><a href="/searchUser/">Search</a></li>
             </ul>
             <div>
                 <ul class="nav navbar-nav dropdown pull-right">
@@ -45,7 +46,7 @@
             <input type="hidden" id='csrfmiddlewaretoken' value="{{ csrf_token }}">
             <div class="col-md-8 col-sm-8 col-xs-12 col-md-offset-2 col-sm-offset-2" style="background-color: #FFFFFF;border-bottom: 1px solid #eee">
                 <div class="pull-left">
-                    <h4 style="padding:5px 0 5px 20px;"><b>Posts</b></h4>
+                    <h4 style="padding:5px 0 5px 20px;"><b>Your Feeds</b></h4>
                 </div>
                 <div class="pull-right" style="padding-top: 5px">
                     <button id="addPersonBtn" class="btn btn-primary" onclick="newPostModal();">New Post</button>
@@ -120,6 +121,7 @@
                         document.getElementById('postBtn').removeAttribute('disabled');
                         if(resp){
                             $('#myModal').modal('hide');
+                            getAllPost();
                         }
                         else{
                             $('#clinicErr').append('<div class="alert alert-warning alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button><strong>Please try after some time.</strong></div>');
@@ -137,7 +139,14 @@
                 url:'/getPostList/',
                 type:'POST',
                 success:function (resp) {
-                    displayPost(resp)
+                    if(resp.length > 0) {
+                        displayPost(resp)
+                    }
+                    else {
+                        var postListDiv = $('#postListDiv');
+                        postListDiv.empty();
+                        postListDiv.append('<div class="text-center" style="margin-top:10px;"><p>Feed is not avaliable.</p></div>');
+                    }
                 }
             });
         }

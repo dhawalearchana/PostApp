@@ -40,4 +40,8 @@ urlpatterns += [
     url(r'^posts/$', postsController),
     url(r'^savePost/$', savePostController),
     url(r'^getPostList/$', getPostListAPI),
+    url(r'^usersLists/$', userController),
+    url(r'^getAllUserDetails/$', getAllUserDetailsAPI),
+    url(r'^searchUser/$', searchUserController),
+    url(r'^searchUserDetailsAPI/$', searchUserDetailsAPI),
 ]
