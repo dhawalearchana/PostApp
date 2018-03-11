@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Posts</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.21.0/moment.min.js"></script>
+
+    <style>
+        .fa { transform: scale(1.5,1); }
+    </style>
+</head>
+<body>
+    <header class="navbar navbar-fixed-top navbar-inverse" style="margin:0;">
+       <div class="container">
+             <div class="navbar-header">
+                <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#primaryNavbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+            </div>
+            <ul id="primaryNavbar" class="nav navbar-nav" style="margin-left:2%">
+                <li class="active"><a href="/posts/">Posts</a></li>
+                <li><a href="/centersAnalytics/">Users</a></li>
+            </ul>
+            <div>
+                <ul class="nav navbar-nav dropdown pull-right">
+                    <li>
+                        <a href="#" class="dropdown-toggle padding_zero" data-toggle="dropdown"><span style="margin-left: 10px">{{ request.session.name }}<b class="caret"></b></span></a>
+                        <ul class="dropdown-menu scrollable">
+                            <li><a href="/logout/" onclick="javascript:sessionStorage.clear();">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </header>
+    <section>
+        <div class="col-md-12 col-sm-12 col-xs-12 form-group" style="background-color: #eee;margin-top: 50px ">
+            <input type="hidden" id='csrfmiddlewaretoken' value="{{ csrf_token }}">
+            <div class="col-md-8 col-sm-8 col-xs-12 col-md-offset-2 col-sm-offset-2" style="background-color: #FFFFFF;border-bottom: 1px solid #eee">
+                <div class="pull-left">
+                    <h4 style="padding:5px 0 5px 20px;"><b>Posts</b></h4>
+                </div>
+                <div class="pull-right" style="padding-top: 5px">
+                    <button id="addPersonBtn" class="btn btn-primary" onclick="newPostModal();">New Post</button>
+                </div>
+            </div>
+            <div class="col-md-8 col-sm-8 col-xs-12 col-md-offset-2 col-sm-offset-2" style="background-color: #FFFFFF">
+                <div id="postListDiv"></div>
+            </div>
+        </div>
+    </section>
+    <div id="myModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Add New Post</h4>
+                </div>
+                <div class="modal-body">
+                    <div id="clinicErr" class="clear_both"></div>
+                    <textarea id="postText" name="postText" rows="3" class="form-control" placeholder="Enter Post Here"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal" style="float: left;">Close</button>
+                    <button type="button" class="btn btn-primary" id="postBtn" onclick="savePostData();">Post</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="application/javascript">
+        function newPostModal() {
+            document.getElementById('postText').value = "";
+            document.getElementById('postBtn').removeAttribute('disabled');
+            $('#clinicErr').empty();
+            $('#myModal').modal('show');
+        }
+
+        function csrfSafeMethod(method) {
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
+        function sameOrigin(url) {
+            var host = document.location.host; // host + port
+            var protocol = document.location.protocol;
+            var sr_origin = '//' + host;
+            var origin = protocol + sr_origin;
+            // Allow absolute or scheme relative URLs to same origin
+            return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
+                (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
+                // or any other URL that isn't scheme relative or absolute i.e relative.
+                !(/^(\/\/|http:|https:).*/.test(url));
+        }
+
+        $.ajaxSetup({
+            beforeSend: function (xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && sameOrigin(settings.url)) {
+                    xhr.setRequestHeader("X-CSRFToken", document.getElementById('csrfmiddlewaretoken').value);
+                }
+            }
+        });
+
+        function savePostData() {
+            document.getElementById('postBtn').setAttribute('disabled', 'true');
+            var postText = document.getElementById('postText').value;
+            $('#clinicErr').empty();
+            if(postText != ""){
+                $.ajax({
+                    url:'/savePost/',
+                    type:'POST',
+                    data:{'postText':postText},
+                    success:function (resp) {
+                        document.getElementById('postBtn').removeAttribute('disabled');
+                        if(resp){
+                            $('#myModal').modal('hide');
+                        }
+                        else{
+                            $('#clinicErr').append('<div class="alert alert-warning alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button><strong>Please try after some time.</strong></div>');
+                        }
+                    }
+                });
+            }
+            else{
+                document.getElementById('postBtn').removeAttribute('disabled');
+                $('#clinicErr').append('<div class="alert alert-warning alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button><strong>Please enter the post.</strong></div>');
+            }
+        }
+        function getAllPost() {
+            $.ajax({
+                url:'/getPostList/',
+                type:'POST',
+                success:function (resp) {
+                    displayPost(resp)
+                }
+            });
+        }
+        function displayPost(postData) {
+            var postListDiv = $('#postListDiv');
+            postListDiv.empty();
+            var itr = 0;
+            for(itr = 0; itr < postData.length; itr++){
+                postListDiv.append('<div class="col-md-12 col-sm-12 col-xs-12 clear_both" style="border-bottom:1px solid #eee"><div class="col-md-1 col-sm-1 col-xs-2" style="font-size:32px;padding-right:0px;"><span style="float:right"><i class="fas fa-user-circle"></i></span></div><div class="col-md-11 col-sm-11 col-xs-11" style="padding:0px;"><div class="col-md-12 col-sm-12 col-xs-12"><p style="float:left;margin-top:10px; font-size:12px; margin-bottom:0px;"><b>'+postData[itr].userDetailsId.fullName+'</b></p><p style="float:right;margin-top:10px; font-size:12px; margin-bottom:0px;color:#6a737c"> on '+moment(postData[itr].postDate).format('MMM D, h:mm a')+'</p></div><div class="col-md-12 col-sm-12 col-xs-12"><p s>'+postData[itr].postText+'</p></div></div></div><hr>');
+            }
+        }
+        getAllPost();
+    </script>
+</body>
+</html>
