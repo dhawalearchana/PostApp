@@ -1,0 +1,11 @@
+#Dependencies For Project
+
+pip install Django==1.11.5
+pip install djangorestframework==3.6.3
+
+
+#Run Project Command
+cd squats_Assigment/PostApp makemigrations
+python manage.py makemigrations
+python manage.py migrate
+python manage.py runserver
